@@ -1,42 +1,69 @@
 
-import { Button } from '@/components/ui/button';
-import {
-  Camera,
-  ArrowRight,
-  ShieldCheck,
-  Zap,
-  LayoutDashboard,
-  Bot,
-  Send,
-  Wand2,
-  CheckCircle,
-  XCircle,
-  Hourglass,
-  Eye,
-} from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
 import type { Complaint } from '@/app/employee/dashboard/page';
 import { ComplaintCardClientOnly } from '@/components/complaint-card-client-only';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { createClient } from '@/lib/supabase/server';
+import {
+  ArrowRight,
+  Bot,
+  Camera,
+  CheckCircle,
+  Hourglass,
+  LayoutDashboard,
+  Send,
+  ShieldCheck,
+  Wand2,
+  XCircle,
+  Zap
+} from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+
 
 export default async function Home() {
-  const supabase = createClient();
-  const { data: complaints, error } = await supabase
-    .from('complaints')
-    .select('*')
-    .order('created_at', { ascending: false });
+  let complaints = [];
+  let error = null;
+
+  try {
+    const supabase = await createClient();
+    const result = await supabase
+      .from('complaints')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    complaints = result.data || [];
+    error = result.error;
+  } catch (e) {
+    console.error('Error fetching complaints:', e);
+    error = e;
+  }
 
   if (error) {
-    console.error('Error fetching complaints:', error);
+    console.error('Error details:', error);
   }
+
+  // ...rest of your code...
+
+
+
+
+// export default async function Home() {
+//   const supabase = await createClient();
+//   const { data: complaints, error } = await supabase
+//     .from('complaints')
+//     .select('*')
+//     .order('created_at', { ascending: false });
+
+//   if (error) {
+//     console.error('Error fetching complaints:', error);
+//   }
 
   const ongoingComplaints =
     complaints?.filter(
