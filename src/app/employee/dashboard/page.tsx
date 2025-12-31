@@ -19,7 +19,7 @@ export type Complaint = {
 };
 
 export default async function EmployeeDashboard() {
-  const supabase = createClient();
+  const supabase = await createClient();
     const { data, error } = await supabase
         .from('complaints')
         .select('*')
