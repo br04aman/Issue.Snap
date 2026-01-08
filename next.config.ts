@@ -51,4 +51,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
->>>>>>> 2357e16 (feat: update complaints handling and employee dashboard)
