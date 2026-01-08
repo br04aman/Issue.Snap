@@ -1,6 +1,7 @@
 
 import type { Complaint } from '@/app/employee/dashboard/page';
 import { ComplaintCardClientOnly } from '@/components/complaint-card-client-only';
+import { HeroGlassSection } from '@/components/hero-glass-section';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,9 +10,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import aboutImage from '@/img/img2.jpg';
+import heroBackground from '@/img/webp1.jpeg';
 import { createClient } from '@/lib/supabase/server';
 import {
-  ArrowRight,
   Bot,
   Camera,
   CheckCircle,
@@ -21,11 +23,12 @@ import {
   ShieldCheck,
   Wand2,
   XCircle,
-  Zap
+  Zap,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   let complaints = [];
@@ -75,47 +78,60 @@ export default async function Home() {
     complaints?.filter((c) => c.status === 'Denied') || [];
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative w-full pt-24 pb-12 md:pt-32 md:pb-20 lg:pt-40 lg:pb-28 overflow-hidden">
-          <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(to_bottom,white_10%,transparent_70%)] dark:bg-grid-slate-700/40"></div>
-          <div className="container mx-auto px-4 md:px-6 text-center animate-fade-in z-10 relative">
-            <div className="mx-auto flex items-center justify-center bg-primary/10 p-4 rounded-full w-fit mb-4 border border-primary/20">
-              <Camera className="h-8 w-8 text-primary" />
-            </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter text-foreground font-headline">
-              IssueSnap
-            </h1>
-            <p className="mt-4 max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground">
-              Bridging the gap between citizens and city services through
-              AI-powered civic issue reporting. See a problem? Snap it, report
-              it, and get it resolved.
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/report">
-                <Button
-                  size="lg"
-                  className="w-full sm:w-auto text-lg py-7 px-8 transition-transform transform hover:scale-105"
-                >
-                  Report an Issue <ArrowRight className="ml-2" />
-                </Button>
-              </Link>
-              <Link href="/employee/login">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full sm:w-auto text-lg py-7 px-8 transition-transform transform hover:scale-105"
-                >
-                  Employee Login
-                </Button>
-              </Link>
-            </div>
+    <div className="relative flex flex-col min-h-screen overflow-hidden">
+      <div className="absolute inset-0 -z-10">
+        <Image
+          src={heroBackground}
+          alt="Abstract geometric background"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-background/70 dark:bg-background/80" />
+      </div>
+      <header className="relative z-20">
+        <div className="container mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <Camera className="h-6 w-6 text-primary" />
+            <span className="text-lg font-semibold text-foreground">IssueSnap</span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm text-foreground">
+            <a href="#how-it-works" className="hover:text-primary transition-colors">
+              How it works
+            </a>
+            <a href="#dashboard" className="hover:text-primary transition-colors">
+              Public dashboard
+            </a>
+            <Link
+              href="/report"
+              className="hover:text-primary transition-colors"
+            >
+              Report issue
+            </Link>
+            <Link href="/employee/login">
+              <Button size="sm" variant="outline">
+                Employee login
+              </Button>
+            </Link>
+          </nav>
+          <div className="flex md:hidden items-center gap-2">
+            <Link href="/report">
+              <Button size="sm">Report</Button>
+            </Link>
+            <Link href="/employee/login">
+              <Button size="sm" variant="outline">
+                Login
+              </Button>
+            </Link>
           </div>
+        </div>
+      </header>
+      <main className="relative flex-1">
+        <section className="w-full pt-24 pb-12 md:pt-28 md:pb-20 lg:pt-32 lg:pb-28">
+          <HeroGlassSection />
         </section>
 
-        {/* How It Works Section */}
-        <section className="py-16 md:py-24 bg-secondary/50">
+        <section id="how-it-works" className="py-16 md:py-24 bg-secondary/50">
           <div className="container mx-auto px-4 md:px-6">
             <div className="text-center">
               <h2 className="text-3xl md:text-4xl font-bold text-foreground">
@@ -281,7 +297,7 @@ export default async function Home() {
             </div>
             <div className="order-1 md:order-2">
               <Image
-                src="https://picsum.photos/seed/issuesnap/800/600"
+                src={aboutImage}
                 alt="City street with a smartphone"
                 width={800}
                 height={600}

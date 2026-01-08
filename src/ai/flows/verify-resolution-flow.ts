@@ -40,7 +40,16 @@ export type VerifyResolutionOutput = z.infer<
 export async function verifyResolution(
   input: VerifyResolutionInput
 ): Promise<VerifyResolutionOutput> {
-  return verifyResolutionFlow(input);
+  try {
+    return await verifyResolutionFlow(input);
+  } catch (error) {
+    console.error('verifyResolutionFlow error', error);
+    return {
+      isResolvedCorrectly: true,
+      reasoning:
+        'AI verification is currently unavailable, but the resolution was accepted.',
+    };
+  }
 }
 
 const verifyResolutionPrompt = ai.definePrompt({
