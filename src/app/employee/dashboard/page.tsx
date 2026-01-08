@@ -2,6 +2,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { EmployeeDashboardClientOnly } from '@/components/employee-dashboard-client-only';
 
+// This line is the fix for the DYNAMIC_SERVER_USAGE error
+export const dynamic = 'force-dynamic';
 export type Complaint = {
   id: string;
   complaint_number: number;

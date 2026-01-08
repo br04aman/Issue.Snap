@@ -313,8 +313,8 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <Card className="col-span-4">
             <CardHeader>
-              <CardTitle>Overview by Category</CardTitle>
-              <CardDescription>Number of complaints per reported category.</CardDescription>
+              <CardTitle>Overview by District wise</CardTitle>
+              <CardDescription>Number of complaints per reported district.</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
               <ChartContainer config={chartConfig} className="h-[350px] w-full">

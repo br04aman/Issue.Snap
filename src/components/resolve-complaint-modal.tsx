@@ -1,24 +1,24 @@
 
 'use client';
 
+import { verifyResolution } from '@/ai/flows/verify-resolution-flow';
+import type { Complaint } from '@/app/employee/dashboard/page';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2, Upload, CheckCircle, ShieldAlert } from 'lucide-react';
+import { CheckCircle, Loader2, ShieldAlert, Upload } from 'lucide-react';
 import Image from 'next/image';
 import { ChangeEvent, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import type { Complaint } from '@/app/employee/dashboard/page';
-import { verifyResolution } from '@/ai/flows/verify-resolution-flow';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 type ResolveComplaintModalProps = {
@@ -141,20 +141,23 @@ export function ResolveComplaintModal({
       const resolvedAt = new Date().toISOString();
 
       // 5. Update complaint in Supabase database
-      const { data: updateData, error: updateError } = await supabase
+      const { error: updateError } = await supabase
         .from('complaints')
         .update({
           status: 'Resolved',
           resolution_image_url: resolutionImageUrl,
           resolved_at: resolvedAt,
         })
-        .eq('id', complaint.id)
-        .select()
-        .single();
-        
+        .eq('id', complaint.id);
+
       if (updateError) throw updateError;
       
-      updatedComplaint = updateData as Complaint;
+      updatedComplaint = {
+        ...complaint,
+        status: 'Resolved',
+        resolution_image_url: resolutionImageUrl,
+        resolved_at: resolvedAt,
+      } as Complaint;
 
       toast({
         title: 'Complaint Resolved!',

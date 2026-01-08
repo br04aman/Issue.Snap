@@ -39,9 +39,16 @@ const nextConfig: NextConfig = {
         hostname: 'wjsmoxpxtjhjhpegkyyw.supabase.co',
         port: '',
         pathname: '/**',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'tpxjtfahdmyovlldctpt.supabase.co',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
 
 export default nextConfig;
+>>>>>>> 2357e16 (feat: update complaints handling and employee dashboard)
