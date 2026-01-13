@@ -1,5 +1,4 @@
 
-import type { Complaint } from '@/app/employee/dashboard/page';
 import { ComplaintCardClientOnly } from '@/components/complaint-card-client-only';
 import { HeroGlassSection } from '@/components/hero-glass-section';
 import { Button } from '@/components/ui/button';
@@ -10,9 +9,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UserNav } from '@/components/user-nav';
 import aboutImage from '@/img/img2.jpg';
 import heroBackground from '@/img/webp1.jpeg';
 import { createClient } from '@/lib/supabase/server';
+import type { Complaint } from '@/types/complaint';
 import {
   Bot,
   Camera,
@@ -108,6 +109,7 @@ export default async function Home() {
             >
               Report issue
             </Link>
+            <UserNav />
             <Link href="/employee/login">
               <Button size="sm" variant="outline">
                 Employee login
@@ -118,6 +120,7 @@ export default async function Home() {
             <Link href="/report">
               <Button size="sm">Report</Button>
             </Link>
+            <UserNav />
             <Link href="/employee/login">
               <Button size="sm" variant="outline">
                 Login

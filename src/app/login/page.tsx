@@ -2,26 +2,30 @@
 
 import { Button } from '@/components/ui/button';
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { login } from './actions';
 
-export default function EmployeeLoginPage() {
+export default function UserLoginPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get return_to parameter from URL
+  const returnTo = searchParams.get('return_to') || '/';
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -40,9 +44,9 @@ export default function EmployeeLoginPage() {
     } else {
       toast({
         title: 'Login Successful',
-        description: 'Redirecting you to the dashboard...',
+        description: 'Welcome back!',
       });
-      router.push('/employee/dashboard');
+      router.push(returnTo);
     }
   };
 
@@ -56,9 +60,9 @@ export default function EmployeeLoginPage() {
       </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Employee Login</CardTitle>
+          <CardTitle className="text-2xl">User Login</CardTitle>
           <CardDescription>
-            Enter your credentials to access the complaints dashboard.
+            Sign in to your account to track your reported issues.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -69,7 +73,7 @@ export default function EmployeeLoginPage() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="you@example.com"
                 required
                 disabled={isLoading}
               />
@@ -92,7 +96,7 @@ export default function EmployeeLoginPage() {
         </CardContent>
         <CardFooter className="text-sm justify-center">
           <p>Don't have an account?&nbsp;</p>
-          <Link href="/employee/signup" className="text-primary hover:underline">
+          <Link href="/signup" className="text-primary hover:underline">
             Sign up
           </Link>
         </CardFooter>
@@ -100,5 +104,3 @@ export default function EmployeeLoginPage() {
     </main>
   );
 }
-
-    

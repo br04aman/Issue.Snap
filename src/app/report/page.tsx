@@ -8,8 +8,20 @@ import {
 } from '@/components/ui/card';
 import { ArrowLeft, Camera } from 'lucide-react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 
-export default function ReportPage() {
+export default async function ReportPage() {
+  const supabase = await createClient();
+  
+  // Check if user is authenticated
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    // Redirect to login page with a return URL
+    redirect('/login?return_to=/report');
+  }
+  
   return (
     <main className="flex min-h-screen w-full flex-col items-center bg-background p-4 sm:p-6 lg:p-8">
        <div className="w-full max-w-2xl">

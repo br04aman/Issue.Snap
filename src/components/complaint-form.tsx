@@ -6,16 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/lib/supabase/client';
+import { parseLocationWithContext } from '@/utils/location-parser';
 import {
-  Camera,
-  CheckCircle,
-  HardHat,
-  Loader2,
-  MapPin,
-  RefreshCcw,
-  Send,
-  Upload,
-  Wand2,
+    Camera,
+    CheckCircle,
+    HardHat,
+    Loader2,
+    MapPin,
+    RefreshCcw,
+    Send,
+    Upload,
+    Wand2,
 } from 'lucide-react';
 import Image from 'next/image';
 import { ChangeEvent, useRef, useState } from 'react';
@@ -60,6 +61,7 @@ export function ComplaintForm() {
   const [complaint, setComplaint] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [department, setDepartment] = useState<string>('');
+  const [priority, setPriority] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
@@ -168,6 +170,7 @@ export function ComplaintForm() {
       setComplaint(result.complaintDraft);
       setCategory(result.category);
       setDepartment(result.department);
+      setPriority(result.priority);
       toast({
         title: 'Complaint Drafted!',
         description: 'Review and edit the AI-generated complaint below.',
@@ -207,7 +210,11 @@ export function ComplaintForm() {
 
       const imageUrl = urlData.publicUrl;
       
+      // Parse location to extract state and district
+      const parsedLocation = parseLocationWithContext(locationDescription);
+      
       const complaintData: any = {
+        id: uuidv4(), // Generate UUID for the complaint
         issue: complaint,
         location_description: locationDescription,
         image_url: imageUrl,
@@ -215,11 +222,22 @@ export function ComplaintForm() {
         longitude: location.longitude,
       };
 
+      // Add state and district if parsed successfully
+      if (parsedLocation.state) {
+        complaintData.state = parsedLocation.state;
+      }
+      if (parsedLocation.district) {
+        complaintData.district = parsedLocation.district;
+      }
+
       if (category) {
         complaintData.category = category;
       }
       if (department) {
         complaintData.department = department;
+      }
+      if (priority) {
+        complaintData.priority = priority;
       }
 
 
@@ -239,6 +257,7 @@ export function ComplaintForm() {
           const fallbackComplaintData: any = { ...complaintData };
           delete fallbackComplaintData.category;
           delete fallbackComplaintData.department;
+          delete fallbackComplaintData.priority;
 
           const { error: retryError } = await supabase
             .from('complaints')

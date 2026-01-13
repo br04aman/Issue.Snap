@@ -2,7 +2,7 @@
 'use client';
 
 import { verifyResolution } from '@/ai/flows/verify-resolution-flow';
-import type { Complaint } from '@/app/employee/dashboard/page';
+import type { Complaint } from '@/types/complaint';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

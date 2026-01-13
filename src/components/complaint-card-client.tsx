@@ -4,7 +4,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
 import Image from 'next/image';
-import type { Complaint } from '@/app/employee/dashboard/page';
+import type { Complaint } from '@/types/complaint';
 import { useEffect, useState } from 'react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';

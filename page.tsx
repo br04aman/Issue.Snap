@@ -1,27 +1,13 @@
 
-import { createClient } from '@/lib/supabase/server';
 import { EmployeeDashboardClientOnly } from '@/components/employee-dashboard-client-only';
+import { createClient } from '@/lib/supabase/server';
+import type { Complaint } from '@/types/complaint';
 
 // This line is the fix for the DYNAMIC_SERVER_USAGE error
 export const dynamic = 'force-dynamic';
-export type Complaint = {
-  id: string;
-  complaint_number: number;
-  issue: string;
-  location_description: string;
-  status: 'New' | 'In Progress' | 'Resolved' | 'Denied' | 'In Review';
-  image_url: string;
-  created_at: string;
-  latitude: number;
-  longitude: number;
-  category: string;
-  department: string;
-  resolution_image_url: string | null;
-  resolved_at: string | null;
-};
 
 export default async function EmployeeDashboard() {
-  const supabase = createClient();
+  const supabase = await createClient();
     const { data, error } = await supabase
         .from('complaints')
         .select('*')

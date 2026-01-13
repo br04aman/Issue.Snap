@@ -1,21 +1,21 @@
 
 'use client';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import type { Complaint } from '@/types/complaint';
+import { ShieldAlert } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import type { Complaint } from '@/app/employee/dashboard/page';
-import { Badge } from './ui/badge';
-import { ShieldAlert } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Badge } from './ui/badge';
 
 type ComplaintDetailsModalProps = {
   complaint: Complaint;
@@ -109,6 +109,12 @@ export function ComplaintDetailsModal({
                          <div>
                             <p className="text-sm font-medium text-muted-foreground">Resolution Date</p>
                             <p className="text-sm text-foreground" suppressHydrationWarning>{resolvedDate || '...'}</p>
+                        </div>
+                    )}
+                    {complaint.status === 'Denied' && complaint.denial_reason && (
+                         <div className="mt-3 p-3 bg-destructive/10 rounded-md">
+                            <p className="text-sm font-medium text-destructive">Denial Reason</p>
+                            <p className="text-sm text-foreground">{complaint.denial_reason}</p>
                         </div>
                     )}
                 </div>

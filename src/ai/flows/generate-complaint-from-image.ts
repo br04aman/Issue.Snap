@@ -10,8 +10,8 @@
 
 'use server';
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const GenerateComplaintFromImageInputSchema = z.object({
   photoDataUri: z
@@ -33,6 +33,9 @@ const GenerateComplaintFromImageOutputSchema = z.object({
   complaintDraft: z.string().describe('A draft complaint generated from the image.'),
   category: z.enum(complaintCategories).describe('The category of the complaint.'),
   department: z.enum(departments).describe('The department responsible for handling the complaint.'),
+  priority: z.enum(['Low', 'Medium', 'High']).describe('The priority level of the complaint based on severity and urgency.'),
+  state: z.string().optional().describe('The Indian state where the issue is located, extracted from the location description.'),
+  district: z.string().optional().describe('The Indian district where the issue is located, extracted from the location description.'),
 });
 export type GenerateComplaintFromImageOutput = z.infer<
   typeof GenerateComplaintFromImageOutputSchema
@@ -56,13 +59,26 @@ Based on the image and location description, generate a concise but descriptive 
 
 Also, categorize the complaint into one of the following categories: ${complaintCategories.join(', ')}. Be strict in your categorization. If you are not confident, choose 'Other'.
 
-Finally, assign a department responsible for handling the complaint from the following list. Follow these rules STRICTLY:
+Assign a department responsible for handling the complaint from the following list. Follow these rules STRICTLY:
 - Potholes and Broken Streetlights MUST be 'Public Works'.
 - Trash and illegal dumping MUST be 'Sanitation'.
 - Graffiti MUST be 'Community Services'.
 - For any other issue, or if the issue is ambiguous, you MUST assign 'General Administration'.
 
-Do not deviate from these department assignments.
+Finally, determine the priority level based on the severity and urgency of the issue:
+- HIGH: Issues that pose immediate safety risks (large potholes, broken streetlights at night, hazardous waste, extensive graffiti near schools/hospitals)
+- MEDIUM: Issues that affect daily life but aren't urgent (medium-sized potholes, trash accumulation, graffiti in commercial areas)
+- LOW: Minor cosmetic issues or low-impact problems (small cracks, minimal litter, small graffiti in low-traffic areas)
+
+Additionally, analyze the location description to extract the Indian state and district where the issue is located. Look for:
+- State names (e.g., "Maharashtra", "Karnataka", "Delhi")
+- District names (e.g., "Pune", "Bangalore Urban", "South Delhi")
+- Major cities that can indicate state/district (e.g., "Mumbai" indicates Maharashtra state and Mumbai district)
+- Common abbreviations or alternative names
+
+If you can confidently identify the state and/or district from the location description, include them in your response. If you're unsure, leave these fields empty rather than guessing.
+
+Do not deviate from these assignments.
 
 Location Description: {{{locationDescription}}}
 Photo: {{media url=photoDataUri}}`,
