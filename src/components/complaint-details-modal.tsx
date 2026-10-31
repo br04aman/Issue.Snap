@@ -56,6 +56,20 @@ export function ComplaintDetailsModal({
     }
   };
 
+  const getPriorityBadgeClassName = () => {
+    switch (complaint.priority_label) {
+      case 'Critical':
+        return 'border-red-200 bg-red-100 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200';
+      case 'High':
+        return 'border-orange-200 bg-orange-100 text-orange-800 dark:border-orange-900 dark:bg-orange-950 dark:text-orange-200';
+      case 'Medium':
+        return 'border-yellow-200 bg-yellow-100 text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950 dark:text-yellow-200';
+      case 'Low':
+      default:
+        return 'border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200';
+    }
+  };
+
   return (
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
@@ -85,6 +99,26 @@ export function ComplaintDetailsModal({
                         <p className="text-sm font-medium text-muted-foreground">Status</p>
                         <Badge variant={getStatusVariant()}>{complaint.status}</Badge>
                     </div>
+                    {complaint.priority_label && typeof complaint.priority_score === 'number' && (
+                        <>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">Priority</p>
+                                <Badge variant="outline" className={getPriorityBadgeClassName()}>
+                                    {complaint.priority_label}
+                                </Badge>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">Priority Score</p>
+                                <p className="text-sm text-foreground">{complaint.priority_score.toFixed(2)} / 10</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground">Priority Model</p>
+                                <p className="text-sm text-foreground">
+                                    Severity {complaint.severity_score?.toFixed(2) ?? '--'} | Occurrence {complaint.occurrence_score?.toFixed(2) ?? '--'} | Exposure {complaint.exposure_score?.toFixed(2) ?? '--'}
+                                </p>
+                            </div>
+                        </>
+                    )}
                     <div>
                         <p className="text-sm font-medium text-muted-foreground">Description</p>
                         <p className="text-sm text-foreground">{complaint.issue}</p>

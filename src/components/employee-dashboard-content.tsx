@@ -1,67 +1,68 @@
 
 'use client';
 
+import type { Complaint } from '@/app/employee/dashboard/page';
+import { ResolveComplaintModal } from '@/components/resolve-complaint-modal';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    ChartContainer,
+    ChartTooltipContent,
+    type ChartConfig,
+} from '@/components/ui/chart';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { withComplaintPriority } from '@/lib/priority';
 import { createClient } from '@/lib/supabase/client';
 import {
-  CheckCircle,
-  Eye,
-  FileText,
-  Loader2,
-  LogOut,
-  Newspaper,
-  ShieldAlert,
-  XCircle,
+    CheckCircle,
+    Eye,
+    FileText,
+    Loader2,
+    LogOut,
+    Newspaper,
+    ShieldAlert,
+    XCircle,
 } from 'lucide-react';
-import {
-  BarChart,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Bar,
-  CartesianGrid,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
-import {
-  ChartContainer,
-  ChartTooltipContent,
-  type ChartConfig,
-} from '@/components/ui/chart';
-import { ResolveComplaintModal } from '@/components/resolve-complaint-modal';
-import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import type { Complaint } from '@/app/employee/dashboard/page';
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from 'recharts';
 import { ComplaintDetailsModal } from './complaint-details-modal';
 
 
@@ -113,6 +114,14 @@ const chartConfig = {
     color: 'hsl(var(--chart-5))',
   },
 } satisfies ChartConfig;
+
+const categoryChartColors: Record<string, string> = {
+  Pothole: 'hsl(var(--chart-1))',
+  Graffiti: 'hsl(var(--chart-2))',
+  Trash: 'hsl(var(--chart-3))',
+  'Broken Streetlight': 'hsl(var(--chart-4))',
+  Other: 'hsl(var(--chart-5))',
+};
 
 export function EmployeeDashboardContent({ initialComplaints }: {initialComplaints: Complaint[]}) {
   const [complaints, setComplaints] = useState<Complaint[]>(initialComplaints);
@@ -202,9 +211,14 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
     setComplaintToDeny(null);
   };
 
+  const prioritizedComplaints = useMemo(
+    () => withComplaintPriority(complaints),
+    [complaints]
+  );
+
   const { totalComplaints, newComplaints, resolvedComplaints, chartData, statusChartData } =
     useMemo(() => {
-      const categoryCounts = complaints.reduce((acc, complaint) => {
+      const categoryCounts = prioritizedComplaints.reduce((acc, complaint) => {
         const category = complaint.category || 'Other';
         acc[category] = (acc[category] || 0) + 1;
         return acc;
@@ -214,15 +228,15 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
         .map(([name, total]) => ({
           name,
           complaints: total,
-          fill: chartConfig[name as keyof typeof chartConfig]?.color || chartConfig['Other'].color,
+          fill: categoryChartColors[name] ?? categoryChartColors.Other,
         }))
         .sort((a, b) => b.complaints - a.complaints);
       
-      const newCount = complaints.filter((c) => c.status === 'New').length;
-      const resolvedCount = complaints.filter((c) => c.status === 'Resolved').length;
-      const deniedCount = complaints.filter((c) => c.status === 'Denied').length;
-      const inProgressCount = complaints.filter((c) => c.status === 'In Progress').length;
-      const inReviewCount = complaints.filter((c) => c.status === 'In Review').length;
+      const newCount = prioritizedComplaints.filter((c) => c.status === 'New').length;
+      const resolvedCount = prioritizedComplaints.filter((c) => c.status === 'Resolved').length;
+      const deniedCount = prioritizedComplaints.filter((c) => c.status === 'Denied').length;
+      const inProgressCount = prioritizedComplaints.filter((c) => c.status === 'In Progress').length;
+      const inReviewCount = prioritizedComplaints.filter((c) => c.status === 'In Review').length;
 
 
       const statusChartData = [
@@ -234,13 +248,13 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
       ].filter(item => item.count > 0);
 
       return {
-        totalComplaints: complaints.length,
+        totalComplaints: prioritizedComplaints.length,
         newComplaints: newCount,
         resolvedComplaints: resolvedCount,
         chartData,
         statusChartData,
       };
-    }, [complaints]);
+    }, [prioritizedComplaints]);
 
   const getStatusVariant = (status: Complaint['status']) => {
     switch (status) {
@@ -256,6 +270,20 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
         return 'outline';
       default:
         return 'secondary';
+    }
+  };
+
+  const getPriorityBadgeClassName = (priorityLabel?: Complaint['priority_label']) => {
+    switch (priorityLabel) {
+      case 'Critical':
+        return 'border-red-200 bg-red-100 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200';
+      case 'High':
+        return 'border-orange-200 bg-orange-100 text-orange-800 dark:border-orange-900 dark:bg-orange-950 dark:text-orange-200';
+      case 'Medium':
+        return 'border-yellow-200 bg-yellow-100 text-yellow-800 dark:border-yellow-900 dark:bg-yellow-950 dark:text-yellow-200';
+      case 'Low':
+      default:
+        return 'border-slate-200 bg-slate-100 text-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200';
     }
   };
 
@@ -415,16 +443,19 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
         </div>
         <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <CardHeader>
-            <CardTitle>Recent Complaints</CardTitle>
+            <CardTitle>Priority Queue</CardTitle>
             <CardDescription>
-              Here are the latest issues reported by users. Select a row to take action.
+              Complaints are ranked using the research-paper severity, recurrence, and exposure model.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Rank</TableHead>
                   <TableHead>ID</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Score</TableHead>
                   <TableHead>Issue</TableHead>
                   <TableHead>Photo</TableHead>
                   <TableHead>Resolution</TableHead>
@@ -438,9 +469,18 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {complaints.map((complaint) => (
+                {prioritizedComplaints.map((complaint) => (
                   <TableRow key={complaint.id} className="hover:bg-muted/50 transition-colors">
-                     <TableCell className="font-semibold">#{complaint.complaint_number}</TableCell>
+                    <TableCell className="font-semibold">#{complaint.priority_rank}</TableCell>
+                    <TableCell className="font-semibold">#{complaint.complaint_number}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={getPriorityBadgeClassName(complaint.priority_label)}>
+                        {complaint.priority_label}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {complaint.priority_score?.toFixed(2) ?? '--'}
+                    </TableCell>
                     <TableCell className="font-medium max-w-xs truncate">
                       {complaint.issue}
                     </TableCell>
@@ -539,7 +579,11 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDenying}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDenyComplaint} disabled={isDenying} variant="destructive">
+            <AlertDialogAction
+              onClick={handleDenyComplaint}
+              disabled={isDenying}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               {isDenying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Yes, Deny Complaint
             </AlertDialogAction>
