@@ -6,16 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/lib/supabase/client';
+import { parseLocationWithContext } from '@/utils/location-parser';
 import {
-  Camera,
-  CheckCircle,
-  HardHat,
-  Loader2,
-  MapPin,
-  RefreshCcw,
-  Send,
-  Upload,
-  Wand2,
+    Camera,
+    CheckCircle,
+    HardHat,
+    Loader2,
+    MapPin,
+    RefreshCcw,
+    Send,
+    Upload,
+    Wand2,
 } from 'lucide-react';
 import Image from 'next/image';
 import { ChangeEvent, useRef, useState } from 'react';
@@ -25,6 +26,30 @@ import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 type Location = { latitude: number; longitude: number };
 
+async function getAddressFromCoordinates(
+  latitude: number,
+  longitude: number
+): Promise<string | null> {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: any = await response.json();
+
+    if (data && typeof data.display_name === 'string') {
+      return data.display_name;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 export function ComplaintForm() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -36,6 +61,7 @@ export function ComplaintForm() {
   const [complaint, setComplaint] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [department, setDepartment] = useState<string>('');
+  const [priority, setPriority] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
@@ -78,18 +104,40 @@ export function ComplaintForm() {
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
         const newLocation = { latitude, longitude };
+
         setLocation(newLocation);
         setLocationDescription(
           `approx. ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
         );
-        setIsLocationLoading(false);
-        toast({
-          title: 'Location Acquired',
-          description: 'Your location has been successfully recorded.',
-        });
+
+        try {
+          const address = await getAddressFromCoordinates(latitude, longitude);
+
+          if (address) {
+            setLocationDescription(
+              `${address} (lat ${latitude.toFixed(
+                5
+              )}, lon ${longitude.toFixed(5)})`
+            );
+          }
+
+          toast({
+            title: 'Location Acquired',
+            description: address
+              ? 'Your location address has been successfully recorded.'
+              : 'Your location has been successfully recorded.',
+          });
+        } catch {
+          toast({
+            title: 'Location Acquired',
+            description: 'Your location has been successfully recorded.',
+          });
+        } finally {
+          setIsLocationLoading(false);
+        }
       },
       () => {
         toast({
@@ -122,6 +170,7 @@ export function ComplaintForm() {
       setComplaint(result.complaintDraft);
       setCategory(result.category);
       setDepartment(result.department);
+      setPriority(result.priority);
       toast({
         title: 'Complaint Drafted!',
         description: 'Review and edit the AI-generated complaint below.',
@@ -155,13 +204,17 @@ export function ComplaintForm() {
       if (uploadError) throw uploadError;
 
       // 2. Get public URL for the image
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = await supabase.storage
         .from('complaint-images')
         .getPublicUrl(fileName);
 
       const imageUrl = urlData.publicUrl;
       
+      // Parse location to extract state and district
+      const parsedLocation = parseLocationWithContext(locationDescription);
+      
       const complaintData: any = {
+        id: uuidv4(), // Generate UUID for the complaint
         issue: complaint,
         location_description: locationDescription,
         image_url: imageUrl,
@@ -169,18 +222,54 @@ export function ComplaintForm() {
         longitude: location.longitude,
       };
 
+      // Add state and district if parsed successfully
+      if (parsedLocation.state) {
+        complaintData.state = parsedLocation.state;
+      }
+      if (parsedLocation.district) {
+        complaintData.district = parsedLocation.district;
+      }
+
       if (category) {
         complaintData.category = category;
       }
       if (department) {
         complaintData.department = department;
       }
+      if (priority) {
+        complaintData.priority = priority;
+      }
 
 
       // 3. Insert complaint into Supabase database
-      const { error: insertError } = await supabase.from('complaints').insert(complaintData);
+      const { error: insertError } = await supabase
+        .from('complaints')
+        .insert(complaintData);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        const message = insertError.message || '';
+        const code = insertError.code;
+
+        if (
+          code === 'PGRST204' &&
+          message.includes("'category' column of 'complaints'")
+        ) {
+          const fallbackComplaintData: any = { ...complaintData };
+          delete fallbackComplaintData.category;
+          delete fallbackComplaintData.department;
+          delete fallbackComplaintData.priority;
+
+          const { error: retryError } = await supabase
+            .from('complaints')
+            .insert(fallbackComplaintData);
+
+          if (retryError) {
+            throw retryError;
+          }
+        } else {
+          throw insertError;
+        }
+      }
 
       setIsSubmitting(false);
       setIsSubmitted(true);

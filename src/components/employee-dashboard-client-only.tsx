@@ -1,6 +1,6 @@
 'use client';
 import dynamic from 'next/dynamic';
-import type { Complaint } from '@/app/employee/dashboard/page';
+import type { Complaint } from '@/types/complaint';
 import { Loader2 } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 

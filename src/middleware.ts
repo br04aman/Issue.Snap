@@ -38,9 +38,17 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  let session = null;
+
+  try {
+    const {
+      data: { session: supabaseSession },
+    } = await supabase.auth.getSession();
+    session = supabaseSession;
+  } catch (error) {
+    console.error('Error getting session in middleware:', error);
+    // Continue with session as null if we can't get it
+  }
 
   const { pathname } = request.nextUrl;
 

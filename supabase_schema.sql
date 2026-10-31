@@ -47,6 +47,9 @@ create table if not exists complaints (
   latitude float,
   longitude float,
   image_url text,
+  category text,
+  department text,
+  district text,
   status text default 'New' not null
 );
 
