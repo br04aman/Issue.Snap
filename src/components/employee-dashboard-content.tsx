@@ -261,19 +261,30 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
     setDenialReason('');
   };
 
+  // Score every complaint once so the research-based priority label is
+  // available for filtering, then re-rank the filtered subset.
+  const scoredComplaints = useMemo(
+    () => withComplaintPriority(complaints),
+    [complaints]
+  );
+
   // Filter complaints based on selected filters
   const filteredComplaints = useMemo(() => {
-    return complaints.filter((complaint) => {
+    return scoredComplaints.filter((complaint) => {
       if (stateFilter && stateFilter !== 'all' && complaint.state !== stateFilter) return false;
       if (districtFilter && districtFilter !== 'all' && complaint.district !== districtFilter) return false;
-      if (priorityFilter && priorityFilter !== 'all' && complaint.priority !== priorityFilter) return false;
+      if (priorityFilter && priorityFilter !== 'all' && complaint.priority_label !== priorityFilter) return false;
       if (statusFilter && statusFilter !== 'all' && complaint.status !== statusFilter) return false;
       return true;
     });
-  }, [complaints, stateFilter, districtFilter, priorityFilter, statusFilter]);
+  }, [scoredComplaints, stateFilter, districtFilter, priorityFilter, statusFilter]);
 
   const prioritizedComplaints = useMemo(
-    () => withComplaintPriority(filteredComplaints),
+    () =>
+      filteredComplaints.map((complaint, index) => ({
+        ...complaint,
+        priority_rank: index + 1,
+      })),
     [filteredComplaints]
   );
 
@@ -309,7 +320,7 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
       ].filter(item => item.count > 0);
 
       const priorityCounts = prioritizedComplaints.reduce((acc, complaint) => {
-        const priority = complaint.priority || 'Unknown';
+        const priority = complaint.priority_label || 'Unknown';
         acc[priority] = (acc[priority] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
@@ -318,7 +329,7 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
           { priority: 'Low', count: priorityCounts['Low'] || 0, fill: '#10b981' },
           { priority: 'Medium', count: priorityCounts['Medium'] || 0, fill: '#f59e0b' },
           { priority: 'High', count: priorityCounts['High'] || 0, fill: '#dc2626' },
-          { priority: 'Unknown', count: priorityCounts['Unknown'] || 0, fill: 'hsl(var(--muted))' },
+          { priority: 'Critical', count: priorityCounts['Critical'] || 0, fill: '#7f1d1d' },
       ].filter(item => item.count > 0);
 
       return {
@@ -679,6 +690,7 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All priorities</SelectItem>
+                    <SelectItem value="Critical">Critical</SelectItem>
                     <SelectItem value="High">High</SelectItem>
                     <SelectItem value="Medium">Medium</SelectItem>
                     <SelectItem value="Low">Low</SelectItem>
@@ -731,7 +743,6 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
                   <TableHead>Photo</TableHead>
                   <TableHead>Resolution</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>Priority</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Submitted</TableHead>
@@ -784,24 +795,6 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
                     <TableCell>
                       <Badge variant="outline">
                         {complaint.category || 'Other'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={
-                          complaint.priority === 'High' ? 'destructive' :
-                          complaint.priority === 'Medium' ? 'default' :
-                          complaint.priority === 'Low' ? 'secondary' :
-                          'secondary'
-                        }
-                        className={
-                          complaint.priority === 'Low' ? 'bg-emerald-500 hover:bg-emerald-600' :
-                          complaint.priority === 'Medium' ? 'bg-amber-500 hover:bg-amber-600' :
-                          complaint.priority === 'High' ? 'bg-red-600 hover:bg-red-700' :
-                          ''
-                        }
-                      >
-                        {complaint.priority || 'Not Set'}
                       </Badge>
                     </TableCell>
                     <TableCell>{complaint.department || 'N/A'}</TableCell>
