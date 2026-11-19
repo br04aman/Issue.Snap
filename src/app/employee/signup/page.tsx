@@ -2,12 +2,12 @@
 
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -72,7 +72,7 @@ export default function EmployeeSignupPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/employee/login" className="w-full">
+            <Link href="/admin" className="w-full">
               <Button className="w-full">Back to Login</Button>
             </Link>
           </CardContent>
@@ -123,7 +123,7 @@ export default function EmployeeSignupPage() {
         </CardContent>
         <CardFooter className="text-sm justify-center">
           <p>Already have an account?&nbsp;</p>
-          <Link href="/employee/login" className="text-primary hover:underline">
+          <Link href="/admin" className="text-primary hover:underline">
             Log in
           </Link>
         </CardFooter>

@@ -1,69 +1,6 @@
 
 'use client';
 
-<<<<<<< HEAD
-import type { Complaint } from '@/app/employee/dashboard/page';
-import { ResolveComplaintModal } from '@/components/resolve-complaint-modal';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
-import {
-    ChartContainer,
-    ChartTooltipContent,
-    type ChartConfig,
-} from '@/components/ui/chart';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { useToast } from '@/hooks/use-toast';
-import { withComplaintPriority } from '@/lib/priority';
-import { createClient } from '@/lib/supabase/client';
-import {
-    CheckCircle,
-    Eye,
-    FileText,
-    Loader2,
-    LogOut,
-    Newspaper,
-    ShieldAlert,
-    XCircle,
-} from 'lucide-react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Cell,
-    Pie,
-    PieChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis,
-=======
 import { ResolveComplaintModal } from '@/components/resolve-complaint-modal';
 import {
   AlertDialog,
@@ -106,6 +43,7 @@ import {
 } from '@/components/ui/table';
 import { INDIAN_STATES_AND_DISTRICTS, getDistrictsByState } from '@/data/indian-states-districts';
 import { useToast } from '@/hooks/use-toast';
+import { withComplaintPriority } from '@/lib/priority';
 import { createClient } from '@/lib/supabase/client';
 import type { Complaint } from '@/types/complaint';
 import {
@@ -115,7 +53,6 @@ import {
   FileText,
   Filter,
   Info,
-  Layers,
   Loader2,
   LocateFixed,
   LogOut,
@@ -138,7 +75,6 @@ import {
   Tooltip,
   XAxis,
   YAxis,
->>>>>>> bcfe58c1eb2cae74674c2b694a3f4b7df2b406ad
 } from 'recharts';
 import { ComplaintDetailsModal } from './complaint-details-modal';
 
@@ -226,7 +162,7 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
       title: 'Logged Out',
       description: 'You have been successfully logged out.',
     });
-    router.push('/employee/login');
+    router.push('/admin');
   };
 
   useEffect(() => {
@@ -325,16 +261,6 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
     setDenialReason('');
   };
 
-<<<<<<< HEAD
-  const prioritizedComplaints = useMemo(
-    () => withComplaintPriority(complaints),
-    [complaints]
-  );
-
-  const { totalComplaints, newComplaints, resolvedComplaints, chartData, statusChartData } =
-    useMemo(() => {
-      const categoryCounts = prioritizedComplaints.reduce((acc, complaint) => {
-=======
   // Filter complaints based on selected filters
   const filteredComplaints = useMemo(() => {
     return complaints.filter((complaint) => {
@@ -346,10 +272,14 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
     });
   }, [complaints, stateFilter, districtFilter, priorityFilter, statusFilter]);
 
+  const prioritizedComplaints = useMemo(
+    () => withComplaintPriority(filteredComplaints),
+    [filteredComplaints]
+  );
+
   const { totalComplaints, newComplaints, resolvedComplaints, chartData, statusChartData, priorityChartData } =
     useMemo(() => {
-      const categoryCounts = filteredComplaints.reduce((acc, complaint) => {
->>>>>>> bcfe58c1eb2cae74674c2b694a3f4b7df2b406ad
+      const categoryCounts = prioritizedComplaints.reduce((acc, complaint) => {
         const category = complaint.category || 'Other';
         acc[category] = (acc[category] || 0) + 1;
         return acc;
@@ -363,19 +293,11 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
         }))
         .sort((a, b) => b.complaints - a.complaints);
       
-<<<<<<< HEAD
       const newCount = prioritizedComplaints.filter((c) => c.status === 'New').length;
       const resolvedCount = prioritizedComplaints.filter((c) => c.status === 'Resolved').length;
       const deniedCount = prioritizedComplaints.filter((c) => c.status === 'Denied').length;
       const inProgressCount = prioritizedComplaints.filter((c) => c.status === 'In Progress').length;
       const inReviewCount = prioritizedComplaints.filter((c) => c.status === 'In Review').length;
-=======
-      const newCount = filteredComplaints.filter((c) => c.status === 'New').length;
-      const resolvedCount = filteredComplaints.filter((c) => c.status === 'Resolved').length;
-      const deniedCount = filteredComplaints.filter((c) => c.status === 'Denied').length;
-      const inProgressCount = filteredComplaints.filter((c) => c.status === 'In Progress').length;
-      const inReviewCount = filteredComplaints.filter((c) => c.status === 'In Review').length;
->>>>>>> bcfe58c1eb2cae74674c2b694a3f4b7df2b406ad
 
 
       const statusChartData = [
@@ -386,7 +308,7 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
           { status: 'Denied', count: deniedCount, fill: 'hsl(var(--destructive))' },
       ].filter(item => item.count > 0);
 
-      const priorityCounts = filteredComplaints.reduce((acc, complaint) => {
+      const priorityCounts = prioritizedComplaints.reduce((acc, complaint) => {
         const priority = complaint.priority || 'Unknown';
         acc[priority] = (acc[priority] || 0) + 1;
         return acc;
@@ -407,11 +329,7 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
         statusChartData,
         priorityChartData,
       };
-<<<<<<< HEAD
     }, [prioritizedComplaints]);
-=======
-    }, [filteredComplaints]);
->>>>>>> bcfe58c1eb2cae74674c2b694a3f4b7df2b406ad
 
   const getStatusVariant = (status: Complaint['status']) => {
     switch (status) {
@@ -658,36 +576,12 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
             </CardContent>
           </Card>
         </div>
-<<<<<<< HEAD
         <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <CardHeader>
             <CardTitle>Priority Queue</CardTitle>
             <CardDescription>
               Complaints are ranked using the research-paper severity, recurrence, and exposure model.
             </CardDescription>
-=======
-        <Card className="animate-fade-in border-none shadow-lg" style={{ animationDelay: '0.3s' }}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
-            <div>
-              <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                <Layers className="h-6 w-6 text-primary" />
-                Recent Complaints
-                <Badge variant="outline" className="ml-2 bg-primary/5 text-primary border-primary/20 animate-pulse">
-                  <span className="mr-1 h-2 w-2 rounded-full bg-primary" />
-                  Live
-                </Badge>
-              </CardTitle>
-              <CardDescription className="text-base mt-1">
-                Manage and respond to the latest issues reported by the community.
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="hidden md:flex">
-                <Filter className="mr-2 h-4 w-4" />
-                Filters
-              </Button>
-            </div>
->>>>>>> bcfe58c1eb2cae74674c2b694a3f4b7df2b406ad
           </CardHeader>
           <CardContent>
             {complaints.length === 0 ? (
@@ -847,11 +741,7 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
                 </TableRow>
               </TableHeader>
               <TableBody>
-<<<<<<< HEAD
                 {prioritizedComplaints.map((complaint) => (
-=======
-                {filteredComplaints.map((complaint) => (
->>>>>>> bcfe58c1eb2cae74674c2b694a3f4b7df2b406ad
                   <TableRow key={complaint.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-semibold">#{complaint.priority_rank}</TableCell>
                     <TableCell className="font-semibold">#{complaint.complaint_number}</TableCell>
@@ -999,15 +889,11 @@ export function EmployeeDashboardContent({ initialComplaints }: {initialComplain
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDenying}>Cancel</AlertDialogCancel>
-<<<<<<< HEAD
             <AlertDialogAction
               onClick={handleDenyComplaint}
               disabled={isDenying}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-=======
-            <AlertDialogAction onClick={handleDenyComplaint} disabled={isDenying}>
->>>>>>> bcfe58c1eb2cae74674c2b694a3f4b7df2b406ad
               {isDenying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Yes, Deny Complaint
             </AlertDialogAction>

@@ -2,21 +2,26 @@
 'use client';
 
 import { generateComplaintFromImage } from '@/ai/flows/generate-complaint-from-image';
+import {
+  validateCivicIssue,
+  type ValidateCivicIssueOutput,
+} from '@/ai/flows/validate-civic-issue';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/lib/supabase/client';
 import { parseLocationWithContext } from '@/utils/location-parser';
 import {
-    Camera,
-    CheckCircle,
-    HardHat,
-    Loader2,
-    MapPin,
-    RefreshCcw,
-    Send,
-    Upload,
-    Wand2,
+  Camera,
+  CheckCircle,
+  HardHat,
+  Loader2,
+  MapPin,
+  RefreshCcw,
+  Send,
+  ShieldAlert,
+  Upload,
+  Wand2
 } from 'lucide-react';
 import Image from 'next/image';
 import { ChangeEvent, useRef, useState } from 'react';
@@ -66,27 +71,86 @@ export function ComplaintForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validation, setValidation] = useState<ValidateCivicIssueOutput | null>(
+    null
+  );
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
 
+  const isBlockedByValidation = validation
+    ? !validation.isCivicIssue || !validation.isClear
+    : false;
+
+  const validationBlock = validation
+    ? !validation.isClear
+      ? {
+          title: 'Image is too blurry or unclear',
+          description: `${validation.reason} Please upload a clear, well-lit, close-up photo of the issue.`,
+        }
+      : {
+          title: "This doesn't look like a civic issue",
+          description: `${validation.reason} Please upload a photo of a public infrastructure or civic problem (e.g., a pothole, graffiti, a broken streetlight, or illegal dumping).`,
+        }
+    : null;
+
+  const runCivicIssueValidation = async (dataUri: string) => {
+    setIsValidating(true);
+    setValidation(null);
+    try {
+      const result = await validateCivicIssue({ photoDataUri: dataUri });
+      setValidation(result);
+      if (!result.isClear) {
+        toast({
+          variant: 'destructive',
+          title: 'Image is too blurry or unclear',
+          description: result.reason,
+        });
+      } else if (!result.isCivicIssue) {
+        toast({
+          variant: 'destructive',
+          title: 'Not a civic issue',
+          description: result.reason,
+        });
+      }
+    } catch (error) {
+      console.error('Error validating civic issue:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Could not verify image',
+        description:
+          'We could not verify the image right now. Please try again.',
+      });
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 4 * 1024 * 1024) {
+      if (file.size > 3 * 1024 * 1024) {
         toast({
           variant: 'destructive',
           title: 'Image too large',
-          description: 'Please upload an image smaller than 4MB.',
+          description: 'Please upload an image smaller than 3MB.',
         });
         return;
       }
       setImageFile(file);
+      // A new image invalidates any previous validation and drafted complaint.
+      setValidation(null);
+      setComplaint('');
+      setCategory('');
+      setDepartment('');
+      setPriority('');
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUri = e.target?.result as string;
         setImagePreview(URL.createObjectURL(file));
         setImageDataUri(dataUri);
+        void runCivicIssueValidation(dataUri);
       };
       reader.readAsDataURL(file);
     }
@@ -160,6 +224,25 @@ export function ComplaintForm() {
       return;
     }
 
+    if (isValidating) {
+      toast({
+        title: 'Verifying image',
+        description: 'Please wait while we check the image.',
+      });
+      return;
+    }
+
+    if (isBlockedByValidation) {
+      toast({
+        variant: 'destructive',
+        title: validationBlock?.title || 'Invalid image',
+        description:
+          validationBlock?.description ||
+          'This image does not look like a reportable civic issue.',
+      });
+      return;
+    }
+
     setIsGenerating(true);
     setComplaint('');
     try {
@@ -190,6 +273,17 @@ export function ComplaintForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!imageFile || !complaint || !location) return;
+
+    if (isBlockedByValidation) {
+      toast({
+        variant: 'destructive',
+        title: validationBlock?.title || 'Invalid image',
+        description:
+          validationBlock?.description ||
+          'This image does not look like a reportable civic issue.',
+      });
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -293,9 +387,12 @@ export function ComplaintForm() {
     setComplaint('');
     setCategory('');
     setDepartment('');
+    setPriority('');
     setIsGenerating(false);
     setIsSubmitting(false);
     setIsSubmitted(false);
+    setIsValidating(false);
+    setValidation(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -347,7 +444,7 @@ export function ComplaintForm() {
             <div className="flex flex-col items-center gap-2 text-muted-foreground py-8">
               <Upload className="h-10 w-10" />
               <p className="font-semibold">Upload an image of the issue</p>
-              <p className="text-sm">PNG, JPG, or WEBP up to 4MB</p>
+              <p className="text-sm">PNG, JPG, or WEBP up to 3MB</p>
               <Button
                 type="button"
                 className="mt-4"
@@ -367,6 +464,29 @@ export function ComplaintForm() {
           accept="image/*"
           capture="environment"
         />
+        {isValidating && (
+          <Alert>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <AlertTitle>Verifying image</AlertTitle>
+            <AlertDescription>
+              Our AI is checking whether this is a genuine civic issue.
+            </AlertDescription>
+          </Alert>
+        )}
+        {validation && validation.isCivicIssue && validation.isClear && (
+          <Alert className="border-green-500/50 text-green-700 dark:text-green-400 [&>svg]:text-green-600">
+            <CheckCircle className="h-4 w-4" />
+            <AlertTitle>Civic issue detected</AlertTitle>
+            <AlertDescription>{validation.reason}</AlertDescription>
+          </Alert>
+        )}
+        {isBlockedByValidation && validationBlock && (
+          <Alert variant="destructive">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>{validationBlock.title}</AlertTitle>
+            <AlertDescription>{validationBlock.description}</AlertDescription>
+          </Alert>
+        )}
       </div>
 
       <div className="space-y-3 animate-fade-in" style={{ animationDelay: '0.2s' }}>
@@ -405,7 +525,13 @@ export function ComplaintForm() {
             <Button
               type="button"
               onClick={handleGenerateComplaint}
-              disabled={isGenerating || !imagePreview || !location}
+              disabled={
+                isGenerating ||
+                isValidating ||
+                isBlockedByValidation ||
+                !imagePreview ||
+                !location
+              }
               className="w-full"
               size="lg"
             >
@@ -457,7 +583,12 @@ export function ComplaintForm() {
               />
               <Button
                 type="submit"
-                disabled={isSubmitting || isGenerating || !complaint}
+                disabled={
+                  isSubmitting ||
+                  isGenerating ||
+                  isBlockedByValidation ||
+                  !complaint
+                }
                 className="w-full"
                 size="lg"
               >

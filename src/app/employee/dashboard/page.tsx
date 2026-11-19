@@ -1,60 +1,46 @@
-
 import { EmployeeDashboardClientOnly } from '@/components/employee-dashboard-client-only';
-<<<<<<< HEAD
-import type { ComplaintPriorityMetrics } from '@/lib/priority';
-
-// This line is the fix for the DYNAMIC_SERVER_USAGE error
-export const dynamic = 'force-dynamic';
-export type Complaint = {
-  id: string;
-  complaint_number: number;
-  issue: string;
-  location_description: string;
-  status: 'New' | 'In Progress' | 'Resolved' | 'Denied' | 'In Review';
-  image_url: string;
-  created_at: string;
-  latitude: number;
-  longitude: number;
-  category: string | null;
-  department: string | null;
-  resolution_image_url: string | null;
-  resolved_at: string | null;
-} & Partial<ComplaintPriorityMetrics>;
-=======
 import { createClient } from '@/lib/supabase/server';
 import type { Complaint } from '@/types/complaint';
+import Link from 'next/link';
 
 // This line is the fix for the DYNAMIC_SERVER_USAGE error
 export const dynamic = 'force-dynamic';
->>>>>>> bcfe58c1eb2cae74674c2b694a3f4b7df2b406ad
 
 export default async function EmployeeDashboard() {
-  const supabase = await createClient();
+  let complaints: Complaint[] = [];
+  let errorMessage: string | null = null;
+
+  try {
+    const supabase = await createClient();
     const { data, error } = await supabase
-        .from('complaints')
-        .select('*')
-        .order('created_at', { ascending: false });
+      .from('complaints')
+      .select('*')
+      .order('created_at', { ascending: false });
 
     if (error) {
-        console.error('Error fetching complaints:', error);
-        return (
-            <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 sm:p-6 lg:p-8">
-                <p className="text-destructive">Error loading complaints: {error.message}</p>
-            </main>
-        );
+      // Supabase / PostgREST errors can be opaque. Log as a warning so a
+      // transient failure does not trigger the Next.js dev overlay.
+      console.warn('Error fetching complaints:', error);
+      errorMessage = error.message || 'Could not load complaints.';
+    } else {
+      complaints = (data as Complaint[]) || [];
     }
+  } catch (error) {
+    // Network / session hiccups (e.g. a stale auth cookie) — degrade gracefully.
+    console.warn('Error fetching complaints:', error);
+    errorMessage = 'Could not reach the server. Please try again.';
+  }
 
-    // Debug logging
-    console.log(`Fetched ${data?.length || 0} complaints from database`);
-    if (data && data.length > 0) {
-        console.log('Sample complaint:', {
-            id: data[0].id,
-            issue: data[0].issue,
-            state: data[0].state,
-            district: data[0].district,
-            location: data[0].location_description
-        });
-    }
+  if (errorMessage) {
+    return (
+      <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4 text-center sm:p-6 lg:p-8">
+        <p className="text-destructive">Error loading complaints: {errorMessage}</p>
+        <Link href="/employee/dashboard" className="mt-4 text-sm underline">
+          Retry
+        </Link>
+      </main>
+    );
+  }
 
-  return <EmployeeDashboardClientOnly complaints={data as Complaint[]} />;
+  return <EmployeeDashboardClientOnly complaints={complaints} />;
 }

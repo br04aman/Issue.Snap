@@ -1,3 +1,5 @@
+import type { ComplaintPriorityMetrics } from '@/lib/priority';
+
 export type Complaint = {
   id: string;
   complaint_number: number;
@@ -16,4 +18,4 @@ export type Complaint = {
   resolution_image_url: string | null;
   resolved_at: string | null;
   denial_reason: string | null;
-};
+} & Partial<ComplaintPriorityMetrics>;

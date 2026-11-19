@@ -45,12 +45,12 @@ export default async function Home() {
     complaints = result.data || [];
     error = result.error;
   } catch (e) {
-    console.error('Error fetching complaints:', e);
+    console.warn('Error fetching complaints:', e);
     error = e;
   }
 
   if (error) {
-    console.error('Error details:', error);
+    console.warn('Error details:', error);
   }
 
   // ...rest of your code...
@@ -110,22 +110,12 @@ export default async function Home() {
               Report issue
             </Link>
             <UserNav />
-            <Link href="/employee/login">
-              <Button size="sm" variant="outline">
-                Employee login
-              </Button>
-            </Link>
           </nav>
           <div className="flex md:hidden items-center gap-2">
             <Link href="/report">
               <Button size="sm">Report</Button>
             </Link>
             <UserNav />
-            <Link href="/employee/login">
-              <Button size="sm" variant="outline">
-                Login
-              </Button>
-            </Link>
           </div>
         </div>
       </header>

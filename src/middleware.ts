@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -46,18 +46,21 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getSession();
     session = supabaseSession;
   } catch (error) {
-    console.error('Error getting session in middleware:', error);
+    console.warn('Error getting session in middleware:', error);
     // Continue with session as null if we can't get it
   }
 
   const { pathname } = request.nextUrl;
 
+  // The admin / employee area requires a session.
   if (pathname.startsWith('/employee/dashboard') && !session) {
-    return NextResponse.redirect(new URL('/employee/login', request.url));
+    return NextResponse.redirect(new URL('/admin', request.url));
   }
 
+  // Signed-in users should not see the admin or employee auth screens.
   if (
-    (pathname.startsWith('/employee/login') || pathname.startsWith('/employee/signup')) &&
+    (pathname.startsWith('/admin') ||
+      pathname.startsWith('/employee/signup')) &&
     session
   ) {
     return NextResponse.redirect(new URL('/employee/dashboard', request.url));

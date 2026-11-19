@@ -47,11 +47,11 @@ export function ResolveComplaintModal({
     setVerificationError(null);
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 4 * 1024 * 1024) {
+      if (file.size > 3 * 1024 * 1024) {
         toast({
           variant: 'destructive',
           title: 'Image too large',
-          description: 'Please upload an image smaller than 4MB.',
+          description: 'Please upload an image smaller than 3MB.',
         });
         return;
       }
